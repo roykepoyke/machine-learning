@@ -2,95 +2,85 @@ package MachineLearning.Libraries;
 
 public class NeuralNetwork {
     public double learningRate;
-    int inputNum;
-    int hiddenNum;
-    int outputNum;
-    Matrix weights1;
-    Matrix weights2;
-    Matrix bias1;
-    Matrix bias2;
+    int layersSizes[];
+    Matrix weights[];
+    Matrix biases[];
 
-    public NeuralNetwork(int in, int hid, int out){
+    public NeuralNetwork(int[] lyrs){
         learningRate = 1;
-        inputNum = in;
-        hiddenNum = hid;
-        outputNum = out;
+        layersSizes = lyrs;
+        weights = new Matrix[layersSizes.length-1];
+        biases = new Matrix[layersSizes.length-1];
 
-        weights1 = new Matrix(hid, in);
-        weights2 = new Matrix(out, hid);
-        bias1 = new Matrix(hid, 1);
-        bias2 = new Matrix(out, 1);
+        // weights and biases init
+        for (int i = 0; i < layersSizes.length - 1; i++) {
+            weights[i] = new Matrix(layersSizes[i+1], layersSizes[i]);
+            weights[i].randomize();
 
-        weights1.randomize();
-        weights2.randomize();
-        bias1.randomize();
-        bias2.randomize();
+            biases[i] = new Matrix(layersSizes[i+1], 1);
+            biases[i].randomize();
+        }
+
+        weightsPrint();
     }
 
-    public double[] predict(double[] inputArr) {
-        Matrix inputLayer = Matrix.fromArray(inputArr);
-        Matrix hidden = Matrix.multiply(weights1, inputLayer);
-        hidden.add(bias1);
-        hidden.activate();
+    public double[] predict(double[] inputArray) {
+        Matrix[] layers = new Matrix[layersSizes.length];
+        layers[0] = Matrix.fromArray(inputArray);
 
-        Matrix output = Matrix.multiply(weights2, hidden);
-        output.add(bias2);
-        output.activate();
+        for (int i = 0; i < layersSizes.length - 1; i++) {
+            layers[i+1] = Matrix.multiply(weights[i], layers[i]);
+            layers[i+1].add(biases[i]);
+            layers[i+1].activate();
+        }
 
-        double[] o = output.toArray();
-        return o;
+        return layers[layersSizes.length - 1].toArray();
     }
 
-    public void train(double[] inputArray, double[] targetsArray){
-        Matrix inputs = Matrix.fromArray(inputArray);
+    public void train(double[] inputArray, double[] targetsArray) {
 
-        Matrix hidden = Matrix.multiply(weights1, inputs);
-        hidden.add(bias1);
-        hidden.activate();
-
-        Matrix outputs = Matrix.multiply(weights2, hidden);
-        outputs.add(bias2);
-        outputs.activate();
-
+        // Forward
+        Matrix[] layers = new Matrix[layersSizes.length];
+        layers[0] = Matrix.fromArray(inputArray);
         Matrix targets = Matrix.fromArray(targetsArray);
-        Matrix outputErrors = Matrix.sub(targets, outputs);
 
-        Matrix gradients = Matrix.dActivate(outputs);
-        gradients = Matrix.mult2(gradients, outputErrors);
-        gradients.multScalar(learningRate);
+        for (int i = 0; i < layersSizes.length - 1; i++) {
+            layers[i+1] = Matrix.multiply(weights[i], layers[i]);
+            layers[i+1].add(biases[i]);
+            layers[i+1].activate();
+        }
 
-        Matrix hiddenTransposed = Matrix.transpose(hidden);
-        Matrix weightDeltas2 = Matrix.multiply(gradients, hiddenTransposed);
+        // Backpropagation
+        Matrix[] errors = new Matrix[layersSizes.length];
+        errors[layersSizes.length - 1] = Matrix.sub(targets, layers[layersSizes.length - 1]);
+        
+        for (int i = layersSizes.length - 1; i > 0; i--) {
+            Matrix gradients = Matrix.dActivate(layers[i]);
+            gradients = Matrix.mult2(gradients, errors[i]);
+            gradients.multScalar(learningRate);
+            
+            weights[i-1].add(Matrix.multiply(gradients, Matrix.transpose(layers[i - 1])));
+            biases[i-1].add(gradients);
 
-        weights2.add(weightDeltas2);
-        bias2.add(gradients);
-
-        Matrix weightTransposed = Matrix.transpose(weights2);
-        Matrix hiddenErrors = Matrix.multiply(weightTransposed, outputErrors);
-
-        Matrix hidden_gradient = Matrix.dActivate(hidden);
-        hidden_gradient = Matrix.mult2(hidden_gradient, hiddenErrors);
-        hidden_gradient.multScalar(learningRate);
-
-        Matrix inputs_T = Matrix.transpose(inputs);
-        Matrix weightDeltas1 = Matrix.multiply(hidden_gradient, inputs_T);
-
-        weights1.add(weightDeltas1);
-        bias1.add(hidden_gradient);
+            errors[i - 1] = Matrix.multiply(Matrix.transpose(weights[i - 1]), errors[i]);
+        }
     }
+    
+    public NeuralNetwork copy(NeuralNetwork NN) {
+        NeuralNetwork NN2 = new NeuralNetwork(NN.layersSizes);
 
-    public static NeuralNetwork copy(NeuralNetwork NN) {
-        NeuralNetwork NN2 = new NeuralNetwork(NN.inputNum, NN.hiddenNum, NN.outputNum);
-        NN2.weights1 = NN.weights1;
-        NN2.weights2 = NN.weights2;
-        NN2.bias1 = NN.bias1;
-        NN2.bias2 = NN.bias2;
+        for (int i = 0; i < layersSizes.length - 1; i++) {
+            NN2.weights[i] = NN.weights[i];
+            NN2.biases[i] = NN.biases[i];
+        }
+
         NN2.learningRate = NN.learningRate;
+
         return NN2;
     }
 
-    public void setLearningRate(double d) {
-        learningRate = d;
+    public void setLearningRate(double rate) {
+        learningRate = rate;
     }
 
     public void mapPrint() {
@@ -119,9 +109,9 @@ public class NeuralNetwork {
 
     public void weightsPrint(){
         System.out.println("inputs to hidden weights:");
-        weights1.print();
+        weights[0].print();
         System.out.println("hidden to output weights:");
-        weights2.print();
+        weights[1].print();
         System.out.println();
     }
 }
