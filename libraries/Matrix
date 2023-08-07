@@ -1,0 +1,154 @@
+package MachineLearning.Libraries;
+
+import java.util.Random;
+
+public class Matrix {
+    public int rows;
+    public int cols;
+    public double[][] data;
+
+    public Matrix(int r, int c){
+        rows = r;
+        cols = c;
+        data = new double[rows][cols];
+    }
+
+    public void randomize() {
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                data[i][j] = 2 * new Random().nextDouble() - 1;
+            }
+        }
+    }
+
+    public static Matrix multiply(Matrix A, Matrix B) {
+
+        Matrix result = new Matrix(A.rows, B.cols);
+
+        if (A.cols == B.rows) {
+            for (int i = 0; i < A.rows; i++) {
+                for (int j = 0; j < B.cols; j++) {
+                    result.data[i][j] = 0.00000;
+                }
+            }
+
+            for (int i = 0; i < A.rows; i++) {
+                for (int j = 0; j < B.cols; j++) {
+                    for (int k = 0; k < A.cols; k++) {
+                        result.data[i][j] += A.data[i][k] * B.data[k][j];
+                    }
+                }
+            }
+            return result;
+        } else {
+            throw new IllegalArgumentException("A:Rows: " + A.cols + " did not match B:Columns " + B.rows + ".");
+        }
+    }
+
+    public static Matrix mult2(Matrix A, Matrix B) {
+        Matrix result = new Matrix(A.rows, A.cols);
+        for (int i = 0; i < A.rows; i++){
+            for (int j = 0; j < B.cols; j++){
+                result.data[i][j] = A.data[i][j];
+                result.data[i][j] *= B.data[i][j];
+            }
+        }
+        return result;
+    }
+
+    public void multScalar(double D) {
+        for (int i = 0; i < rows; i++){
+            for (int j = 0; j < cols; j++){
+                data[i][j] = D*data[i][j];
+            }
+        }
+    }
+
+    public void add(Matrix M) {
+        for (int i = 0; i < rows; i++){
+            for (int j = 0; j < cols; j++){
+                data[i][j] = data[i][j];
+                data[i][j] += M.data[i][j];
+            }
+        }
+    }
+
+    public static Matrix sub(Matrix A, Matrix B) {
+        Matrix result = new Matrix(A.rows, A.cols);
+        for (int i = 0; i < result.rows; i++){
+            for (int j = 0; j < result.cols; j++){
+                result.data[i][j] = A.data[i][j] - B.data[i][j];
+            }
+        }
+        return result;
+    }
+
+    public static Matrix transpose(Matrix M) {
+        Matrix result = new Matrix(M.cols, M.rows);
+        for (int i = 0; i < M.rows; i++){
+            for (int j = 0; j < M.cols; j++){
+                result.data[j][i] = M.data[i][j];
+            }
+        }
+        return result;
+    }
+
+    public void activate() {
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                data[i][j] = 1 / (1 + Math.exp(-data[i][j]));
+            }
+        }
+    }
+
+    public static Matrix dActivate(Matrix M) {
+        Matrix result = new Matrix(M.rows, M.cols);
+        for (int i = 0; i < M.rows; i++) {
+            for (int j = 0; j < M.cols; j++) {
+                result.data[i][j] = M.data[i][j] * (1 - M.data[i][j]);
+            }
+        }
+        return result;
+    }
+
+    public static Matrix fromArray(double[] A) {
+        Matrix M = new Matrix(A.length, 1);
+ 
+        for (int i = 0; i < A.length; i++){
+            M.data[i][0] = A[i];
+        }
+        return M;
+    }
+
+    public double[] toArray() {
+        double[] A = new double[rows*cols];
+ 
+        for(int i = 0; i < rows; i++) {
+            for(int j = 0; j < cols; j++) {
+                double number = data[i][j];
+                A[i*cols+j] = number;
+            }
+        }
+        return A;
+    }
+
+    public void print() {
+        for(int i = 0; i < rows; i++) {
+            System.out.print("[");
+            for(int j = 0; j < cols; j++) {
+                System.out.print(round(data[i][j]));
+                if (j < cols-1){
+                    System.out.print(", ");
+                }
+            }
+            System.out.println("]");
+        }
+        System.out.println();
+    }
+
+    public double round(double d){
+        d = Math.round(d*100);
+        d /= 100;
+        return d;
+    }
+}
