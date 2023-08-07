@@ -4,8 +4,9 @@ import MachineLearning.Libraries.NeuralNetwork;
 
 public class NeuralNetworkTest {
     public static void main(String args[]) {
-        NeuralNetwork nn = new NeuralNetwork(2, 4, 1);
-        nn.setLearningRate(5);
+        int layerSizes[] = {2, 4, 1};
+        NeuralNetwork nn = new NeuralNetwork(layerSizes);
+        nn.setLearningRate(1);
 
         double[][] inputs = {{0, 0}, {1, 0}, {0, 1}, {1, 1}};
         double[][] targets = {{0}, {1}, {1}, {0}};
@@ -19,8 +20,10 @@ public class NeuralNetworkTest {
         int guessing = 100;
         double error = 0;
 
+        // predict 100 tests
         for (int i = 0; i < guessing; i++) {
             double[] answer = nn.predict(inputs[i % inputs.length]);
+
             for (int j = 0; j < answer.length; j++) {
                 error += Math.abs(targets[i % inputs.length][j] - answer[j]);
                 if (Math.round(answer[j]) == targets[i % inputs.length][j]){
@@ -30,7 +33,7 @@ public class NeuralNetworkTest {
         }
 
         nn.mapPrint();
-        //nn.infoPrint(training, guessing, success, error);
+        nn.infoPrint(training, guessing, success, error);
         nn.weightsPrint();
 
         //NeuralNetwork nn2 = NeuralNetwork.copy(nn);
